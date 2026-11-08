@@ -139,7 +139,16 @@ bool takeStock(CustomerRecord c)
 {
     for (int k = 0; k < c.numOrders; k++)
     {
-        if (orders[c.idx][k].quantity > stock[orders[c.idx][k].item])
+        int requestedQuantity = orders[c.idx][k].quantity;
+        for (int previous = 0; previous < k; previous++)
+        {
+            if (orders[c.idx][previous].item == orders[c.idx][k].item)
+            {
+                requestedQuantity += orders[c.idx][previous].quantity;
+            }
+        }
+
+        if (requestedQuantity > stock[orders[c.idx][k].item])
         {
             return false;
         }
@@ -531,16 +540,25 @@ bool isStackEmpty()
  return top == nullptr;
 }
 
-void push(CustomerRecord c) 
+void insertNode(CustomerRecord c) 
 {
-    StackNode* newStackNode = new StackNode;    // New node that will hold the customer
-    newStackNode->customer = c;
-    newStackNode->next = top; 
-    top = newStackNode;
+    StackNode* newNode = new StackNode;    // New node that will hold the customer
+    newNode->customer = c;
+    newNode->next = nullptr;
 
-    cout<<"\nConfirmed Order: "<<newStackNode->customer.fullName<<endl;
+    if (top == nullptr)
+    {
+        top = newNode;
+    }
+    else
+    {
+        newNode->next = top;
+        top = newNode;
+    }
+
+    cout<<"\nConfirmed Order: "<<newNode->customer.fullName<<endl;
     cout<<"                                      ---Order Details---"<<endl;
-    printOrders(newStackNode->customer, orders);
+    printOrders(newNode->customer, orders);
 }
 
 void pop()
@@ -612,6 +630,12 @@ void displayStack()
 //OPTION 1
 void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numOfCus) 
 { 
+    if (numOfCus >= 100)
+    {
+        cout<<"\nCannot register more customers. The record limit has been reached.\n";
+        return;
+    }
+
     cout << "\n--- REGISTER PRE-ORDER ---\n";
     
     cin.ignore(); 
@@ -637,8 +661,15 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
     getline(cin, customers[numOfCus].contactNo);
     
 
-    cout << "How Many orders?: ";
-    cin >> customers[numOfCus].numOrders;
+    do
+    {
+        cout << "How Many orders?: ";
+        cin >> customers[numOfCus].numOrders;
+        if (customers[numOfCus].numOrders < 1 || customers[numOfCus].numOrders > 100)
+        {
+            cout<<"Enter a number of orders between 1 and 100."<<endl;
+        }
+    } while (customers[numOfCus].numOrders < 1 || customers[numOfCus].numOrders > 100);
     cin.ignore();
 
     customers[numOfCus].total = 0;
@@ -705,6 +736,11 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
 
         cout << "Quantity: ";
         cin >> orders[numOfCus][x].quantity;
+        while (orders[numOfCus][x].quantity < 1)
+        {
+            cout<<"Quantity must be greater than 0. Enter again: ";
+            cin >> orders[numOfCus][x].quantity;
+        }
         cin.ignore();
 
         orders[numOfCus][x].subtotal = orders[numOfCus][x].price * orders[numOfCus][x].quantity;
@@ -762,6 +798,16 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
             cin >> customers[numOfCus].shippingFee;
             cin.ignore();
 
+            customers[numOfCus].total += customers[numOfCus].shippingFee;
+
+            validOrderingMethod = true;
+        } 
+        
+        else if (method == 2){
+            customers[numOfCus].orderMet = PICKUP;
+            cout << "Pick-up Time (HH:MM): ";
+            getline(cin, customers[numOfCus].timeSlot);
+
             bool validPickupPeriod = true;  // stays true when the AM/PM input is valid
             do
             {
@@ -794,16 +840,6 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
                     validPickupPeriod = false;
                 }
             } while (validPickupPeriod == false);
-
-            customers[numOfCus].total += customers[numOfCus].shippingFee;
-
-            validOrderingMethod = true;
-        } 
-        
-        else if (method == 2){
-            customers[numOfCus].orderMet = PICKUP;
-            cout << "Pick-up Time (HH:MM): ";
-            getline(cin, customers[numOfCus].timeSlot);
             
             customers[numOfCus].shippingFee = 0;
             
@@ -929,7 +965,7 @@ void processNextOrder()
     {
         CustomerRecord next = securedFront->customer;
         dequeueSecured();
-        push(next);
+        insertNode(next);
     }
 }
 
