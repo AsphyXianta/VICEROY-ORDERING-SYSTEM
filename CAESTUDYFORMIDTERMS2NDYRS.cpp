@@ -227,9 +227,9 @@ void printOrders(CustomerRecord c, Order orders[100][100])
     cout<<"──────────────────────────────────────── ˗ˏˋ⛁$ˎˊ˗ ─────────────────────────────────────────"<<endl;
     //Subtotal after adding the total per item and before shipping fee
     subTb4Sf = c.total - c.shippingFee;
-    cout<<"💲 Subtotal :                                                                    ₱"<<fixed<<setprecision(2)<<subTb4Sf<<endl;
-    cout<<"🚚 Shipping Fee:                                                                 ₱"<<fixed<<setprecision(2)<<c.shippingFee<<endl;
-    cout<<"💸 Total:                                                                        ₱"<<fixed<<setprecision(2)<<c.total<<endl;
+    cout<<"💲 Subtotal :                                                                    "<<fixed<<setprecision(2)<<"₱"<<subTb4Sf<<endl;
+    cout<<"🚚 Shipping Fee:                                                                 "<<fixed<<setprecision(2)<<"₱"<<c.shippingFee<<endl;
+    cout<<"💸 Total:                                                                        "<<fixed<<setprecision(2)<<"₱"<<c.total<<endl;
     cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
 
     // Display order method
@@ -686,7 +686,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
     cout << "Contact No.: ";
     getline(cin, customers[numOfCus].contactNo);
     
-
+    cout<<"-----------------------------------ORDER---------------------------------"<<endl;
     do
     {
         cout << "How many orders?: ";
@@ -1083,9 +1083,9 @@ void linearSearchOrder(CustomerRecord customers[], int numOfCus)
 
             //Compare search key with: full name; address; order method (D - Delivery/P - Pick-up);
             //payment method (C - Cash/M - Maribank/G - G-Cash); and the menu.
-            if (searchKey == customers[y].fullName ||
-                searchKey == customers[y].purok || searchKey == customers[y].brgy ||
-                searchKey == customers[y].municipality || searchKey == customers[y].prov ||
+            if (customers[y].fullName.find(searchKey) != string::npos ||
+                customers[y].purok.find(searchKey) != string::npos || customers[y].brgy.find(searchKey) != string::npos ||
+                customers[y].municipality.find(searchKey) != string::npos || customers[y].prov.find(searchKey) != string::npos ||
                 ((searchKey == "D" || searchKey == "d") && customers[y].orderMet == DELIVERY) ||
                 ((searchKey == "P" || searchKey == "p") && customers[y].orderMet == PICKUP) ||
                 ((searchKey == "C" || searchKey == "c") && customers[y].payMet == CASH) ||
@@ -1150,7 +1150,7 @@ void binarySearchOrder(CustomerRecord customers[], int numOfCus)
             found = true;
             cout<<"[FOUND via Binary Search ] Name: " << customers[mid].fullName
             << "| Contact: " << customers[mid].contactNo
-            << "| Total: ₱" << fixed << setprecision(2) << customers[mid].total << endl;
+            << "| Total: " << fixed << setprecision(2) << "₱" << customers[mid].total << endl;
             break;
         }
         else if (customers[mid].fullName < key)
