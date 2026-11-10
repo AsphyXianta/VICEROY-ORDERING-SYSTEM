@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
+#include <sstream>
 #include <string>
 
 using namespace std;
@@ -99,7 +100,7 @@ int stock[ITEMS] = {        // Remaining stock of each menu item (same order as 
 
 void displayMenu() 
 {
-    cout<<"\n-------------------------------------PITMASTER'S MENU--------------------------------------"<<endl;
+    cout<<"\n-------------------------------------PITMASTER'S MENU-----------------------------"<<endl;
     cout << left << setw(5) << "No"
          << setw(35) << "Product"
          << setw(12) << "Portion"
@@ -110,6 +111,8 @@ void displayMenu()
     for (int i = 0; i < ITEMS; i++)
     {
         string stockLabel;
+        ostringstream priceText;
+        priceText << "₱" << fixed << setprecision(2) << PRICES[i];
         if (stock[i] > 0)
         {
             stockLabel = to_string(stock[i]);
@@ -126,7 +129,7 @@ void displayMenu()
         cout << left << setw(5) << i + 1
              << setw(35) << menu[i][0]
              << setw(12) << menu[i][1]
-             << right << setw(2) << "₱" << setw(11) << fixed << setprecision(2) << PRICES[i]
+             << right << setw(14) << priceText.str()
              << setw(18) << stockLabel << endl;
     }
     cout << string(82, '-') << endl;
@@ -180,10 +183,11 @@ void printOrders(CustomerRecord c, Order orders[100][100])
     cout<<"────────────────────────────────────── ∘₊✧ ORDER ✧₊ ───────────────────────────────────────\n";
     cout << left << setw(6) << "No"
          << setw(38) << "Item"
-         << right << setw(12) << "Quantity"
+         << "  Quantity  "
+         << right
          << setw(14) << "Price"
          << setw(18) << "Per Item Total" << endl;
-    cout << string(88, '-') << endl;
+    cout << string(91, '-') << endl;
 
     // Loop through each order of a customer
     for(int x = 0; x < c.numOrders; x++)
@@ -217,11 +221,21 @@ void printOrders(CustomerRecord c, Order orders[100][100])
 
         //Used displaying each item total by multiplying quantity and price
         itemTot = orders[c.idx][x].quantity * orders[c.idx][x].price;
+        ostringstream priceText;
+        priceText << "₱" << fixed << setprecision(2) << orders[c.idx][x].price;
+        ostringstream itemTotalText;
+        itemTotalText << "₱" << fixed << setprecision(2) << itemTot;
+        string quantityText = to_string(orders[c.idx][x].quantity);
+        int quantityLeftPadding = (12 - quantityText.length()) / 2;
+        int quantityRightPadding = 12 - quantityText.length() - quantityLeftPadding;
+
         cout << left << setw(6) << x + 1
              << setw(38) << itemName
-             << right << setw(12) << orders[c.idx][x].quantity
-             << setw(2) << "₱" << setw(13) << fixed << setprecision(2) << orders[c.idx][x].price
-             << setw(2) << "₱" << setw(17) << itemTot << endl;
+             << string(quantityLeftPadding, ' ') << quantityText
+             << string(quantityRightPadding, ' ')
+             << right
+             << setw(16) << priceText.str()
+             << setw(20) << itemTotalText.str() << endl;
        
     }
     cout<<"──────────────────────────────────────── ˗ˏˋ⛁$ˎˊ˗ ─────────────────────────────────────────"<<endl;
@@ -238,31 +252,11 @@ void printOrders(CustomerRecord c, Order orders[100][100])
     if (c.orderMet == PICKUP)
     {
         cout<<"Pick-up\n";
-        cout<<"🕒 Pick-up Time : "<<c.timeSlot<<" ";
-
-        if (c.period == AM)
-        {
-            cout<<"AM"<<endl;
-        }
-        else
-        {
-            cout<<"PM"<<endl;
-        }
     }
 
     else
     {
         cout<<"📦 Delivery\n";
-        cout<<"🕒 Delivery Time : "<<c.timeSlot<<" ";
-
-        if (c.period == AM)
-        {
-            cout<<"AM"<<endl;
-        }
-        else
-        {
-            cout<<"PM"<<endl;
-        }
     }
 
     // Display payment method
@@ -293,37 +287,40 @@ void printOrders(CustomerRecord c, Order orders[100][100])
         cout<<" [Shortlisted]"<<endl;
     }
 
-    cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
+    cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl<<endl;
 }
 
 void printEmptyList()
 {
+    cout<<endl;
     cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
     cout<<"                              Stack Status: EMPTY"<<endl;
     cout<<"-------------------------------------------------------------------------------------------"<<endl;
     cout<<"                              📦 NO CONFIRMED ORDERS"<<endl;
     cout<<"                       There are currently no orders in the stack."<<endl;
-    cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
+    cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl<<endl;
 }
 
 void printEmptySecuredQueue()
 {
+    cout<<endl;
     cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
     cout<<"                              QUEUE STATUS: EMPTY"<<endl;
     cout<<"-------------------------------------------------------------------------------------------"<<endl;
     cout<<"                              📦 NO PENDING SECURED ORDERS"<<endl;
     cout<<"                       There are currently no secured customers in the queue."<<endl;
-    cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
+    cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl<<endl;
 }
 
 void printEmptyShortlistedQueue()
 {
+    cout<<endl;
     cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
     cout<<"                              QUEUE STATUS: EMPTY"<<endl;
     cout<<"-------------------------------------------------------------------------------------------"<<endl;
     cout<<"                              📦 NO PENDING SHORTLISTED ORDERS"<<endl;
     cout<<"                       There are currently no shortlisted customers in the queue."<<endl;
-    cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
+    cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl<<endl;
 }
 
 
@@ -398,7 +395,7 @@ void peekSecuredQueue()
 
 void displaySecuredQueue()
 {
-    cout<<"Secured Orders: "<<endl;
+    cout<<"\nSecured Orders: "<<endl;
     if(isSecuredQueueEmpty() == true)
     {
         printEmptySecuredQueue();
@@ -423,7 +420,9 @@ void displaySecuredQueue()
  
         while(current != nullptr)
         {
-            cout<<"\n["<<countingSecured<<"] "<<current->customer.fullName<<endl;
+            cout<<"\n["<<countingSecured<<"] "<<current->customer.fullName
+                <<" | Time: "<<current->customer.timeSlot
+                <<" "<<(current->customer.period == AM ? "AM" : "PM")<<endl;
             printOrders(current->customer, orders);
  
             current = current->next;
@@ -526,7 +525,9 @@ void displayShortlistedQueue()
  
         while(current != nullptr)
         {
-            cout<<"\n["<<countingShortlisted<<"] "<<current->customer.fullName<<endl;
+            cout<<"\n["<<countingShortlisted<<"] "<<current->customer.fullName
+                <<" | Time: "<<current->customer.timeSlot
+                <<" "<<(current->customer.period == AM ? "AM" : "PM")<<endl;
             printOrders(current->customer, orders);
  
             current = current->next;
@@ -627,7 +628,7 @@ void peekList()
 
 void displayList()
 {
-    cout<<"Confirmed Orders: "<<endl;
+    cout<<"\nConfirmed Orders: "<<endl;
     if (isListEmpty())
     {
         printEmptyList();
@@ -643,7 +644,9 @@ void displayList()
 
         while (current != nullptr)
         {
-            cout<<"Position "<<position<<": "<<current->customer.fullName<<endl;
+            cout<<"Position "<<position<<": "<<current->customer.fullName
+                <<" | Time: "<<current->customer.timeSlot
+                <<" "<<(current->customer.period == AM ? "AM" : "PM")<<endl;
             cout<<"                                      ---Order Details---"<<endl;
             printOrders(current->customer, orders);
             current = current->next;
@@ -663,7 +666,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
         return;
     }
 
-    cout << "\n--- REGISTER PRE-ORDER ---\n";
+    cout << "\n----------------------- REGISTER PRE-ORDER --------------------\n";
     
     cout<<"Full Name: ";
     getline(cin, customers[numOfCus].fullName);
@@ -685,8 +688,8 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
     
     cout << "Contact No.: ";
     getline(cin, customers[numOfCus].contactNo);
-    
-    cout<<"-----------------------------------ORDER---------------------------------"<<endl;
+           
+    cout<<"----------------------------- ORDER ---------------------------"<<endl;
     do
     {
         cout << "How many orders?: ";
@@ -734,7 +737,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
                 return;
             }
 
-            cout << "Select Item (1 - 5)";
+            cout << "Select Item " << x + 1 << " (1 - 5): ";
             int choice;
             cin >> choice;
             
@@ -820,6 +823,8 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
         }
         cin.ignore();
 
+        cout<<endl;
+
         orders[numOfCus][x].subtotal = orders[numOfCus][x].price * orders[numOfCus][x].quantity;
         customers[numOfCus].total += orders[numOfCus][x].subtotal;
     }
@@ -871,7 +876,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
                 }
             } while (validDeliveryPeriod == false);
 
-            cout << "Shipping Fee: P";
+            cout << "Shipping Fee: ₱";
             cin >> customers[numOfCus].shippingFee;
             cin.ignore();
 
@@ -1010,7 +1015,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
         }
     } while (validBookingType == false);
 
-    cout<<"\n [SUCCESS] Pre-order registered!\n";
+    cout<<"\n [SUCCESS] Pre-order registered!\n\n";
     numOfCus++;
 }
 
@@ -1205,7 +1210,7 @@ void bubbleSortOrder(CustomerRecord customers[], int numOfCus)
 {
     if (numOfCus < 2)
     {
-        cout<<"\nNot enough records to sort.\n";
+        cout<<"\nNot enough records to sort.\n\n";
         return;
     }
 
@@ -1250,15 +1255,17 @@ void bubbleSortOrder(CustomerRecord customers[], int numOfCus)
         }
         
     }
-    cout<<"[SUCCESS] Orders sorted successfully via Bubble Sort!\n";
+    cout<<"\n[SUCCESS] Orders sorted successfully via Bubble Sort!\n";
 
     cout<<"\n---SORTED REPORT---\n";
     for (int i = 0; i < numOfCus; i++)
     {
         cout<<"[" << i + 1 << "] Name: " << customers[i].fullName
-        << "| Time: " << customers[i].timeSlot
+        << "| Time: " << customers[i].timeSlot << " "
+        << (customers[i].period == AM ? "AM" : "PM")
         << "| Total: "<< fixed << setprecision(2) << customers[i].total << endl;
     }
+    cout<<endl;
 }
 
 //OPTION 6
