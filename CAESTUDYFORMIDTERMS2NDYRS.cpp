@@ -100,41 +100,36 @@ int stock[ITEMS] = {        // Remaining stock of each menu item (same order as 
 void displayMenu() 
 {
     cout<<"\n-------------------------------------PITMASTER'S MENU--------------------------------------"<<endl;
-    cout<<"No\t\t\tProduct\t\t\t\t\t\tPortion\tPrice\t Stock"<<endl;
-    cout<<"-------------------------------------------------------------------------------------------"<<endl;
+    cout << left << setw(5) << "No"
+         << setw(35) << "Product"
+         << setw(12) << "Portion"
+         << right << setw(12) << "Price"
+         << setw(18) << "Stock" << endl;
+    cout << string(82, '-') << endl;
 
     for (int i = 0; i < ITEMS; i++)
     {
-        cout<<i + 1<<"\t"<<menu[i][0]<<"\t\t"<<menu[i][1]<<"\t";
-        cout<<"₱"<<fixed<<setprecision(2)<<PRICES[i];
-
-        if (PRICES[i] < 100)// para lang pumantay sa column
-        {
-            cout<<"  ";
-        }
-        else
-        {
-            if (PRICES[i] < 1000)   
-            {
-                cout<<" ";
-            }
-        }
-        
+        string stockLabel;
         if (stock[i] > 0)
         {
-            cout<<"  "<<stock[i]<<endl;
-
+            stockLabel = to_string(stock[i]);
             if (stock[i] <= 3)
             {
-                cout<<" (Low stock)"<<endl;
+                stockLabel += " (Low stock)";
             }
         }
         else
         {
-            cout<<"  SOLD OUT"<<endl;
+            stockLabel = "SOLD OUT";
         }
+
+        cout << left << setw(5) << i + 1
+             << setw(35) << menu[i][0]
+             << setw(12) << menu[i][1]
+             << right << setw(2) << "₱" << setw(11) << fixed << setprecision(2) << PRICES[i]
+             << setw(18) << stockLabel << endl;
     }
-    cout<<"-------------------------------------------------------------------------------------------"<<endl;
+    cout << string(82, '-') << endl;
 }
 
 bool takeStock(CustomerRecord c)
@@ -183,46 +178,50 @@ void printOrders(CustomerRecord c, Order orders[100][100])
     cout<<"📞 Contact: "<<c.contactNo<<endl;
 
     cout<<"────────────────────────────────────── ∘₊✧ ORDER ✧₊ ───────────────────────────────────────\n";
-    cout<<"\tNo\t\t\t\t\t\tItem\t\t\tQuantity\tPrice\tPer Item Total\n";
-    cout<<"────────────────────────────────────────────────────────────────────────────────────────────"<<endl;
+    cout << left << setw(6) << "No"
+         << setw(38) << "Item"
+         << right << setw(12) << "Quantity"
+         << setw(14) << "Price"
+         << setw(18) << "Per Item Total" << endl;
+    cout << string(88, '-') << endl;
 
     // Loop through each order of a customer
     for(int x = 0; x < c.numOrders; x++)
     {
-        cout<<"\t"<<x + 1<<"\t\t\t";
-
         // Display item name based on enum value
+        string itemName;
         if (orders[c.idx][x].item == CROWN)
         {
-            cout<<"THE CROWN JEWELS Smoked Pork Belly\t\t";
+            itemName = "THE CROWN JEWELS Smoked Pork Belly";
         }
 
         else if (orders[c.idx][x].item == USDA)
         {
-            cout<<"USDA Smoked Beef Shortplate       \t\t";
+            itemName = "USDA Smoked Beef Shortplate";
         }
 
         else if (orders[c.idx][x].item == HONEY)
         {
-            cout<<"Artisan Honey Cured Smoked Bacon  \t\t";
+            itemName = "Artisan Honey Cured Smoked Bacon";
         }
 
         else if (orders[c.idx][x].item == PIT)
         {
-            cout<<"The Pitmaster's Sampler           \t\t";
+            itemName = "The Pitmaster's Sampler";
         }
 
         else
         {
-            cout<<"Extra Signature BBQ Sauce         \t\t";
+            itemName = "Extra Signature BBQ Sauce";
         }
-
-        cout<<orders[c.idx][x].quantity<<"\t";
-        cout<<"₱"<<fixed<<setprecision(2)<<orders[c.idx][x].price<<" \t";
 
         //Used displaying each item total by multiplying quantity and price
         itemTot = orders[c.idx][x].quantity * orders[c.idx][x].price;
-        cout << fixed << setprecision(2) << " ₱" << itemTot << endl;
+        cout << left << setw(6) << x + 1
+             << setw(38) << itemName
+             << right << setw(12) << orders[c.idx][x].quantity
+             << setw(2) << "₱" << setw(13) << fixed << setprecision(2) << orders[c.idx][x].price
+             << setw(2) << "₱" << setw(17) << itemTot << endl;
        
     }
     cout<<"──────────────────────────────────────── ˗ˏˋ⛁$ˎˊ˗ ─────────────────────────────────────────"<<endl;
@@ -706,9 +705,35 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
 
     for (int x = 0; x < customers[numOfCus].numOrders; x++) 
     {
+        int availableStock = 0;
         bool validMenu = true;      // Stays true when the chosen menu number is valid
         do
         {
+            bool hasAvailableStock = false;
+            for (int i = 0; i < ITEMS; i++)
+            {
+                int remainingStock = stock[i];
+                for (int previous = 0; previous < x; previous++)
+                {
+                    if (orders[numOfCus][previous].item == static_cast<Menu>(i))
+                    {
+                        remainingStock -= orders[numOfCus][previous].quantity;
+                    }
+                }
+
+                if (remainingStock > 0)
+                {
+                    hasAvailableStock = true;
+                    break;
+                }
+            }
+
+            if (!hasAvailableStock)
+            {
+                cout << "No items are currently available. Pre-order registration cancelled." << endl;
+                return;
+            }
+
             cout << "Select Item (1 - 5)";
             int choice;
             cin >> choice;
@@ -759,13 +784,38 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
                 
                 validMenu = false;
             }
+
+            if (validMenu)
+            {
+                availableStock = stock[orders[numOfCus][x].item];
+                for (int previous = 0; previous < x; previous++)
+                {
+                    if (orders[numOfCus][previous].item == orders[numOfCus][x].item)
+                    {
+                        availableStock -= orders[numOfCus][previous].quantity;
+                    }
+                }
+
+                if (availableStock <= 0)
+                {
+                    cout << "Item sold out. Pick another." << endl;
+                    validMenu = false;
+                }
+            }
         } while (validMenu == false);
 
-        cout << "Quantity: ";
+        cout << "Quantity (1 - " << availableStock << "): ";
         cin >> orders[numOfCus][x].quantity;
-        while (orders[numOfCus][x].quantity < 1)
+        while (orders[numOfCus][x].quantity < 1 || orders[numOfCus][x].quantity > availableStock)
         {
-            cout<<"Quantity must be greater than 0. Enter again: ";
+            if (orders[numOfCus][x].quantity < 1)
+            {
+                cout<<"Quantity must be greater than 0. Enter again: ";
+            }
+            else
+            {
+                cout << "Quantity exceeds available stock (" << availableStock << "). Enter again: ";
+            }
             cin >> orders[numOfCus][x].quantity;
         }
         cin.ignore();
@@ -1158,13 +1208,39 @@ void bubbleSortOrder(CustomerRecord customers[], int numOfCus)
         cout<<"\nNot enough records to sort.\n";
         return;
     }
-    
-    cout<<"\nSorting customer records alphabetically by Full Name using Bubble Sort\n";
+
+    int sortChoice;
+    do
+    {
+        cout << "\nSort by [1] Time [2] Name: ";
+        cin >> sortChoice;
+        if (sortChoice != 1 && sortChoice != 2)
+        {
+            cout << "Invalid choice. Select 1 for Time or 2 for Name." << endl;
+        }
+    } while (sortChoice != 1 && sortChoice != 2);
+    cin.ignore();
+
+    cout << "\nSorting customer records by "
+         << (sortChoice == 1 ? "Time" : "Full Name")
+         << " using Bubble Sort\n";
     for (int i = 0; i < numOfCus - 1; i++)
     {
         for (int j = 0; j < numOfCus - i - 1; j++)
         {
-            if (customers[j].fullName > customers[j+1].fullName)
+            bool shouldSwap;
+            if (sortChoice == 1)
+            {
+                shouldSwap = customers[j].period > customers[j + 1].period ||
+                    (customers[j].period == customers[j + 1].period &&
+                     customers[j].timeSlot > customers[j + 1].timeSlot);
+            }
+            else
+            {
+                shouldSwap = customers[j].fullName > customers[j + 1].fullName;
+            }
+
+            if (shouldSwap)
             {
                 CustomerRecord temp = customers[j];
                 customers[j] = customers[j+1];
