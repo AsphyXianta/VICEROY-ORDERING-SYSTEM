@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <iomanip>
+#include <string>
 
 using namespace std;
 
@@ -56,6 +57,7 @@ struct CustomerRecord
     string contactNo;
     OrderMethod orderMet;
     BookingType bookType;
+    BookingType origBookType;   // Booking type chosen at registration (bookType becomes SECURED once promoted)
     PaymentMode payMet;
     string timeSlot;
     TimePeriod period;   // AM or PM of the timeSlot
@@ -98,7 +100,7 @@ int stock[ITEMS] = {        // Remaining stock of each menu item (same order as 
 void displayMenu() 
 {
     cout<<"\n-------------------------------------PITMASTER'S MENU--------------------------------------"<<endl;
-    cout<<"No\t\t\tProduct\t\t\t\t\tPortion\tPrice\t Stock"<<endl;
+    cout<<"No\t\t\tProduct\t\t\t\t\t\tPortion\tPrice\t Stock"<<endl;
     cout<<"-------------------------------------------------------------------------------------------"<<endl;
 
     for (int i = 0; i < ITEMS; i++)
@@ -161,6 +163,15 @@ bool takeStock(CustomerRecord c)
     return true;
 }
 
+// Gives the items of a customer back to the stock (opposite of takeStock)
+void returnStock(CustomerRecord c)
+{
+    for (int k = 0; k < c.numOrders; k++)
+    {
+        stock[orders[c.idx][k].item] = stock[orders[c.idx][k].item] + orders[c.idx][k].quantity;
+    }
+}
+
 void printOrders(CustomerRecord c, Order orders[100][100])
 {
     double subTb4Sf;
@@ -172,7 +183,7 @@ void printOrders(CustomerRecord c, Order orders[100][100])
     cout<<"📞 Contact: "<<c.contactNo<<endl;
 
     cout<<"────────────────────────────────────── ∘₊✧ ORDER ✧₊ ───────────────────────────────────────\n";
-    cout<<"\tNo\t\t\t\t\tItem\t\tQuantity\tPrice\tPer Item Total\n";
+    cout<<"\tNo\t\t\t\t\t\tItem\t\t\tQuantity\tPrice\tPer Item Total\n";
     cout<<"────────────────────────────────────────────────────────────────────────────────────────────"<<endl;
 
     // Loop through each order of a customer
@@ -286,7 +297,7 @@ void printOrders(CustomerRecord c, Order orders[100][100])
     cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
 }
 
-void printEmptyStack()
+void printEmptyList()
 {
     cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
     cout<<"                              Stack Status: EMPTY"<<endl;
@@ -527,100 +538,117 @@ void displayShortlistedQueue()
 }
 //-------------------------------------
 
-//STACK
-struct StackNode {
-    CustomerRecord customer;    // The customer data stored in this node
-    StackNode* next;            // Points to the node below this one in the stack (nullptr if last)
+// LINKED LIST (Confirmed Orders)
+struct ListNode
+{
+    CustomerRecord customer;   // Stores the value of the node
+    ListNode* next;     // Stores the address of the next node
 };
 
-StackNode* top = nullptr;       // Top of the Confirmed-orders stack (nullptr = empty)
+ListNode* head = nullptr;
 
-bool isStackEmpty() 
+bool isListEmpty()
 {
- return top == nullptr;
+    return head == nullptr;
 }
 
-void insertNode(CustomerRecord c) 
+int countList()
 {
-    StackNode* newNode = new StackNode;    // New node that will hold the customer
-    newNode->customer = c;
-    newNode->next = nullptr;
+    int count = 0;
+    ListNode* current = head;
 
-    if (top == nullptr)
+    while (current != nullptr)
     {
-        top = newNode;
+        count++;
+        current = current->next;
     }
-    else
-    {
-        newNode->next = top;
-        top = newNode;
-    }
+    return count;
+}
 
-    cout<<"\nConfirmed Order: "<<newNode->customer.fullName<<endl;
+//INSERT AT THE BEGINNNING
+void insertAtBeginning(CustomerRecord c)
+{
+    //Create a new node
+    ListNode* newListNode = new ListNode;
+    newListNode->customer = c;
+
+    newListNode->next = head;
+    head = newListNode;
+
+    cout<<"\nConfirmed Order: "<<newListNode->customer.fullName<<endl;
     cout<<"                                      ---Order Details---"<<endl;
-    printOrders(newNode->customer, orders);
+    printOrders(newListNode->customer, orders);
 }
 
-void pop()
+//REMOVE A NODE AT A POSITION
+bool removeAtPosition(int position, CustomerRecord &removed)
 {
-    if(isStackEmpty() == true)
+    if (position < 1 || position > countList())
     {
-        cout<<"                            ---No Confirmed Order to Undo---"<<endl;
-        printEmptyStack();
-        return;
+        return false;
     }
-    StackNode* temp = top;
-    cout<<"Confirmation Undone: "<<top->customer.fullName<<endl;
-    top = top->next;
-    delete temp;
-}
 
-void peekStack()
-{
-    if(isStackEmpty() == true)
+    if (position == 1)
     {
-        printEmptyStack();
+        ListNode* temp = head;
+        removed = temp->customer;
+        head = head->next;
+        delete temp;
     }
     else
     {
-        cout<<"Most Recently Confirmed Order: "<<top->customer.fullName<<endl;
-        cout<<"                                      ---Order Details---"<<endl;
-        printOrders(top->customer, orders);
-    }
-}
+        ListNode* current = head;
 
-void displayStack()
-{
-    cout<<"Confirmed Orders: "<<endl;
-    if(isStackEmpty() == true)
-    {
-        printEmptyStack();
-    }
-    else
-    {
-        StackNode* current = top;           // Walker pointer that moves through the stack
-        int confirmedCustomerCount = 0;     // Counts customers in the stack
-
-        while(current != nullptr)
+        for(int i = 1; i < position - 1; i++)
         {
-            confirmedCustomerCount++;
             current = current->next;
         }
 
-        cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
-        cout<<"                              STACK STATUS: "<<confirmedCustomerCount<<" Confirmed Customer"<<endl;
+        ListNode* temp = current->next;
+        removed = temp->customer;
+        current->next = temp->next;
+        delete temp;
+    }
+    return true;
+}
+
+void peekList()
+{
+    if (isListEmpty())
+    {
+        printEmptyList();
+    }
+    else
+    {
+        cout<<"Most Recently Confirmed Order: "<<head->customer.fullName<<endl;
+        cout<<"                                      ---Order Details---"<<endl;
+        printOrders(head->customer, orders);
+    }
+}
+
+void displayList()
+{
+    cout<<"Confirmed Orders: "<<endl;
+    if (isListEmpty())
+    {
+        printEmptyList();
+    }
+    else
+    {
+         cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
+        cout<<"                              CONFIRMED LIST: "<<countList()<<" Confirmed Customer"<<endl;
         cout<<"-------------------------------------------------------------------------------------------"<<endl;
 
-        current = top;
-        int countingStack = 1;          // Numbering shown beside each confirmed customer
+        ListNode* current = head;
+        int position = 1;
 
-        while(current != nullptr)
+        while (current != nullptr)
         {
-            cout<<"\n["<<countingStack<<"] "<<current->customer.fullName<<endl;
+            cout<<"Position "<<position<<": "<<current->customer.fullName<<endl;
+            cout<<"                                      ---Order Details---"<<endl;
             printOrders(current->customer, orders);
-
             current = current->next;
-            countingStack++;
+            position++;
         }
         cout<<endl;
     }
@@ -638,7 +666,6 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
 
     cout << "\n--- REGISTER PRE-ORDER ---\n";
     
-    cin.ignore(); 
     cout<<"Full Name: ";
     getline(cin, customers[numOfCus].fullName);
     
@@ -902,6 +929,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
         if(bookChoice == 1)
         {
             customers[numOfCus].bookType = SECURED;
+            customers[numOfCus].origBookType = SECURED;
 
             if (takeStock(customers[numOfCus]) == true)
             {
@@ -918,6 +946,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
         else if (bookChoice == 2)
         {
             customers[numOfCus].bookType = SHORTLISTED;
+            customers[numOfCus].origBookType = SHORTLISTED;
             enqueueShortlisted(customers[numOfCus]);
 
             validBookingType = true;
@@ -965,7 +994,7 @@ void processNextOrder()
     {
         CustomerRecord next = securedFront->customer;
         dequeueSecured();
-        insertNode(next);
+        insertAtBeginning(next);
     }
 }
 
@@ -974,18 +1003,88 @@ void displayOrders()
 {
     displaySecuredQueue();
     displayShortlistedQueue();
-    displayStack();
+    displayList();
 }
 
 //OPTION 4
+//LINEAR SEARCH (same as the Search in CC102): checks every customer one by one, records can be in any order
+void linearSearchOrder(CustomerRecord customers[], int numOfCus)
+{
+    bool found;             // Stays true when the customer matches the search key
+    int result;             // Counts the matching records
+    char again;             // Y/y = search again
+    string searchKey;
+
+    do
+    {
+        found = false;      //Reset every search
+        result = 0;         //Counts result
+
+        cout<<"\n---LINEAR SEARCH---"<<endl;
+        cout<<"Enter Search Key (Name/Address/D/P/C/M/G/CROWN/USDA/HONEY/PIT/XTRA) : ";
+        getline(cin, searchKey);
+
+        cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
+        cout<<"\n ---------⌕ MATCHING RECORDS---------------------------------------------------------------"<<endl;
+
+        for (int y = 0; y < numOfCus; y++)
+        {
+            found = false;  // reset overall result
+
+            //Compare search key with: full name; address; order method (D - Delivery/P - Pick-up);
+            //payment method (C - Cash/M - Maribank/G - G-Cash); and the menu.
+            if (searchKey == customers[y].fullName ||
+                searchKey == customers[y].purok || searchKey == customers[y].brgy ||
+                searchKey == customers[y].municipality || searchKey == customers[y].prov ||
+                ((searchKey == "D" || searchKey == "d") && customers[y].orderMet == DELIVERY) ||
+                ((searchKey == "P" || searchKey == "p") && customers[y].orderMet == PICKUP) ||
+                ((searchKey == "C" || searchKey == "c") && customers[y].payMet == CASH) ||
+                ((searchKey == "M" || searchKey == "m") && customers[y].payMet == MARIBANK) ||
+                ((searchKey == "G" || searchKey == "g") && customers[y].payMet == GCASH))
+            {
+                found = true;
+            }
+
+            // The orders of a customer are in the row customers[y].idx of orders[][]
+            for (int x = 0; x < customers[y].numOrders; x++)
+            {
+                if (((searchKey == "CROWN" || searchKey == "crown") && orders[customers[y].idx][x].item == CROWN) ||
+                    ((searchKey == "USDA" || searchKey == "usda") && orders[customers[y].idx][x].item == USDA) ||
+                    ((searchKey == "HONEY" || searchKey == "honey") && orders[customers[y].idx][x].item == HONEY) ||
+                    ((searchKey == "PIT" || searchKey == "pit") && orders[customers[y].idx][x].item == PIT) ||
+                    ((searchKey == "XTRA" || searchKey == "xtra") && orders[customers[y].idx][x].item == XTRA))
+                {
+                    found = true;
+                }
+            }
+
+            if (found)
+            {
+                result++;
+
+                cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
+                cout<<"˖⌕ ۫ . . . Result "<<result<<endl;
+                cout<<"═══════════════════════════════════════════════════════════════════════════════════════════"<<endl;
+                cout<<"👤 Customer "<<y + 1<<"⋆˚࿔"<<endl;
+                printOrders(customers[y], orders);
+            }
+        }
+
+        if (result == 0)    //If not found
+        {
+            cout<<"No Record Found\n";
+        }
+
+        cout<<"\nDo you want to search again?(Y/N): ";
+        cin>>again;
+        cin.ignore();
+
+    } while (again == 'Y' || again == 'y');     //While the answer is Y/y the user can search again and again
+}
+
+//BINARY SEARCH (records must be sorted alphabetically)
 void binarySearchOrder(CustomerRecord customers[], int numOfCus)
 {
-    if (numOfCus == 0)
-    {
-        cout<<"\nNo customer records found to search.\n";
-        return;
-    }
-
     string key;
     cout<<"\n---BINARY SEARCH (Requires Sorted Records) ---"<< endl;
     cout<< "Enter Customer Full Name to search: ";
@@ -1002,17 +1101,17 @@ void binarySearchOrder(CustomerRecord customers[], int numOfCus)
             cout<<"[FOUND via Binary Search ] Name: " << customers[mid].fullName
             << "| Contact: " << customers[mid].contactNo
             << "| Total: ₱" << fixed << setprecision(2) << customers[mid].total << endl;
-            break;  
-        } 
+            break;
+        }
         else if (customers[mid].fullName < key)
         {
             low = mid + 1;
-        } 
+        }
         else
         {
             high = mid - 1;
         }
-        
+
     }
 
     if (!found)
@@ -1020,6 +1119,35 @@ void binarySearchOrder(CustomerRecord customers[], int numOfCus)
         cout<<"Record not found using Binary Search (ensure records are sorted alphabetically)"<<endl;
     }
 
+}
+
+void searchOrder(CustomerRecord customers[], int numOfCus)
+{
+    if (numOfCus == 0)
+    {
+        cout<<"\nNo customer records found to search.\n";
+        return;
+    }
+
+    string searchChoice;
+    cout<<"\n--- SEARCH ORDER ---"<<endl;
+    cout<<"[1] Linear Search            (any search key, records can be in any order)"<<endl;
+    cout<<"[2] Binary Search by Name    (records must be sorted by name)"<<endl;
+    cout<<"Choice: ";
+    getline(cin, searchChoice);
+
+    if (searchChoice == "1")
+    {
+        linearSearchOrder(customers, numOfCus);
+    }
+    else if (searchChoice == "2")
+    {
+        binarySearchOrder(customers, numOfCus);
+    }
+    else
+    {
+        cout<<"Invalid choice."<<endl;
+    }
 }
 
 //OPTION 5
@@ -1056,12 +1184,48 @@ void bubbleSortOrder(CustomerRecord customers[], int numOfCus)
         << "| Total: "<< fixed << setprecision(2) << customers[i].total << endl;
     }
 }
+
 //OPTION 6
-void undoLastOrder()
+void removeConfirmedOrder()
 {
-    pop();
-    // TODO: ibalik ang customer sa queue (pag napagdesisyunan na)
+    if (isListEmpty())
+    {
+        printEmptyList();
+        return;
+    }
+
+    displayList();
+
+    int position;
+    cout<<"Enter position of the order to return to the queue (1 - "<<countList()<<"): ";
+    cin>>position;
+    cin.ignore();
+
+    CustomerRecord removed;     // Holds the customer taken out of the list
+
+    if (removeAtPosition(position, removed) == false)
+    {
+        cout<<"Invalid position."<<endl;
+        return;
+    }
+
+    cout<<"\n[REMOVED from Confirmed List]: "<<removed.fullName<<endl;
+
+    // Return the customer to the REAR of the queue he/she originally came from
+    if (removed.origBookType == SECURED)
+    {
+        // Already paid, so the stock stays reserved
+        enqueueSecured(removed);
+    }
+    else
+    {
+        // Not paid, so the stock taken when he/she was promoted is given back
+        returnStock(removed);
+        removed.bookType = SHORTLISTED;
+        enqueueShortlisted(removed);
+    }
 }
+
 
 //OPTION 7 = peekStack()
 
@@ -1081,18 +1245,19 @@ int main()
     do{
         //Program or System Menu
         //1. Register Pre-order (Queue)             5. Sort Orders (Bubble or Merge)
-        //2. Process Next Order (Dequeu, Push)      6. Undo Last Confirmed Order (Pop, Queue)
+        //2. Process Next Order (Dequeu, Push)      6. Remove Confirmed Order (Remove, Queue)
         //3. Display Orders (Peek Queue)            7. View Last Confirmed Order (Peek Stack)
         //4. Search Order (Linear or Binary)        8. EXIT
         cout<<"─────────────────────────────────────── VICEROY|MENU ──────────────────────────────────────"<<endl;
         cout<<"                 [1] Register Pre-order           [5] Sort Orders                          "<<endl;
-        cout<<"                 [2] Process Next Order           [6] Undo Last Confirmed Order            "<<endl;
+        cout<<"                 [2] Process Next Order           [6] Remove Confirmed Order               "<<endl;
         cout<<"                 [3] Display Orders               [7] View Last Confirmed Order            "<<endl;
         cout<<"                 [4] Search Order                 [8] EXIT                                 "<<endl;
         cout<<"───────────────────────────────────────────────────────────────────────────────────────────"<<endl;
 
         cout<<"Pitmaster, select an option (1 - 8): ";
         cin>>option;
+        cin.ignore();
 
         switch (option)
         {
@@ -1113,8 +1278,7 @@ int main()
             }
             case 4:
             {
-                cin.ignore();
-                binarySearchOrder(customers, numOfCus);
+                searchOrder(customers, numOfCus);
                 break;
             }
             case 5:
@@ -1124,12 +1288,12 @@ int main()
             }
             case 6:
             {
-                undoLastOrder();
+                removeConfirmedOrder();
                 break;
             }
             case 7:
             {
-                peekStack();
+                peekList();
                 break;
             }
             case 8:
