@@ -674,13 +674,13 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
     cout<<"Unit No/Floor/House No.: ";
     getline(cin, customers[numOfCus].unitFloorHouseNo);
     
-    cout<<"Baranggay: ";
+    cout<<"Barangay: ";
     getline(cin, customers[numOfCus].brgy);
     
     cout<<"Municipality: ";
     getline(cin, customers[numOfCus].municipality);
 
-    cout<<"Povince: ";
+    cout<<"Province: ";
     getline(cin, customers[numOfCus].prov);
     
     cout << "Contact No.: ";
@@ -689,7 +689,7 @@ void registerPreOrder(CustomerRecord customers[], Order orders[][100], int &numO
 
     do
     {
-        cout << "How Many orders?: ";
+        cout << "How many orders?: ";
         cin >> customers[numOfCus].numOrders;
         if (customers[numOfCus].numOrders < 1 || customers[numOfCus].numOrders > 100)
         {
@@ -1380,8 +1380,8 @@ int main()
             }
             default:
             {
-                cout<<"Invalid Option, Pitmaster."<<endl;
-                cout<<"Pick Again."<<endl;
+                cout<<"Invalid option, pitmaster."<<endl;
+                cout<<"Pick again."<<endl;
             }
         }
 
